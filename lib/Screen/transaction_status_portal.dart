@@ -105,13 +105,13 @@ class _transactionStatusURLState extends State<transactionStatusURL> {
                             Text("Merchant Identifier : ${strTrans["merchantIdentifier"]}",
                                 textAlign: TextAlign.center),
 
-                            Text("Order ID : ${strTrans["orders"][0]["orderDetail"]["orderId"]}",
+                            Text("Order ID : ${strTrans["orders"][strTrans["orders"].length-1]["orderDetail"]["orderId"]}",
                                 textAlign: TextAlign.center),
 
-                            Text("Reponse Code : ${strTrans["orders"][0]["responseCode"]}",
+                            Text("Reponse Code : ${strTrans["orders"][strTrans["orders"].length-1]["responseCode"]}",
                                 textAlign: TextAlign.center),
 
-                            Text("Response Description : ${strTrans["orders"][0]["responseDescription"]}",
+                            Text("Response Description : ${strTrans["orders"][strTrans["orders"].length-1]["responseDescription"]}",
                                 textAlign: TextAlign.center)
                           ],
                         ),
