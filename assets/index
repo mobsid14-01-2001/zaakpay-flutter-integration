@@ -1,0 +1,1607 @@
+<!--Make changes in PaymentMobilePage.jsp also for mSite-->
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <!-- Google Analytics  UA-19815389-2 -->
+    <script>
+		window.ga = window.ga || function () {
+            (ga.q = ga.q || []).push(arguments)
+        };
+        ga.l = +new Date;
+        ga('create', 'UA-19815389-2', 'auto');
+        ga('set', 'transport', 'beacon');
+        ga('send', 'pageview');
+	</script>
+    <script async src='https://www.google-analytics.com/analytics.js'></script>
+
+    <script type="text/javascript">
+		function handleOutboundLinkClicks(nextstep) {
+            var amountToGa =10;
+            ga('send', 'event', {
+                eventCategory:'checkout',
+                eventAction:'click' ,
+                eventLabel:nextstep,
+                eventValue:amountToGa,
+                transport: 'beacon'
+            });
+        }
+
+        function handleTabsClicks(tab) {
+            var amountToSend=10;
+            ga('send', 'event', {
+                eventCategory:'checkout',
+                eventAction:'instrument_select' ,
+                eventLabel:tab,
+                eventValue:amountToSend,
+                transport: 'beacon'
+            });
+        }
+	</script>
+    <!-- End Google Analytics -->
+
+    <LINK href="https://seal.panaceainfosec.com/styles/seal.css" rel="stylesheet" type="text/css">
+    <style>
+		.imgGeotrustWrp>a>img {
+			height: 25px;
+			width: 70px;
+		}
+
+		section {
+			width: 80%;
+			height: 20px;
+			margin: auto;
+			padding: 10px;
+		}
+
+		div#one {
+			width: 15%;
+			height: 20px;
+			float: left;
+		}
+
+		div#two {
+			margin-left: 15%;
+			height: 20px;
+		}
+	</style>
+
+    <meta charset="UTF-8">
+    <title>Zaakpay Payment Flow</title>
+    <!-- <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,700,800' rel='stylesheet' type='text/css'> -->
+    <link href="/stylesheets/newcardstyle.css?v=3" rel="stylesheet" type="text/css" />
+    <link href="/stylesheets/payment_offers.css?v=2" rel="stylesheet" type="text/css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <!-- <script src="/javascripts/tabcontent.js" type="text/javascript"></script> -->
+    <script src="/javascripts/notify.js" type="text/javascript"></script>
+    <script type="text/javascript">
+		$(document).bind('contextmenu',function(e){
+            return false;
+        });
+
+        function selectCard(cardId,cardNo,cardClass,listSize,first6) {
+            var selectedCard=document.getElementById("selectedCard");
+            detectCardType(cardNo, true);
+            selectedCard.innerHTML="<font>"+cardNo+"</font><i></i>";
+            var formulatedClass = 'svdCrds ' +cardClass;
+            if(listSize > 1)
+            {
+                formulatedClass += 'Actv';
+            }
+            console.log(formulatedClass);
+            /*  selectedCard.setAttribute('class',formulatedClass);	 */
+            selectedCard.className='';
+            selectedCard.className=formulatedClass;
+            selectedCard.style.display='none';
+            selectedCard.style.display='block';
+            document.forms["saveCardForm"].elements["cardId"].value=cardId;
+            document.forms["saveCardForm"].elements["cardType"].value=cardClass;
+            document.getElementById("cardBin").value=first6;
+            var isAmex = (detectCardType(cardNo,false)=="amex");
+            if(isAmex){
+                document.getElementById('cvvimageidsaved').src='images/cvv02.png';
+            }else{
+                document.getElementById('cvvimageidsaved').src='images/cvv-bg.png';
+            }
+        }
+
+        function showDefaultOption() {
+
+            document.getElementById("defaultSelectCardOption").style.display="block";
+        }
+
+        function showCardLogos(type) {
+            if(type=='debit'){
+                document.getElementById("debitLogos").style.display="block";
+                document.getElementById("creditLogos").style.display="none";
+            } else if(type=='credit') {
+                document.getElementById("debitLogos").style.display="none";
+                document.getElementById("creditLogos").style.display="block";
+            }
+        }
+        function displayActualAmt(){
+            if(selectFirstTabFlag==1)
+            {
+                $('#displayAmt').text(' Rs. '+'10.00');
+            }
+            $('#displayAmt').text(' Rs. '+'10.00');
+
+        }
+
+        function hidebanks()
+        {
+            document.getElementById("bnkname").style.display="none";
+        }
+
+        function detectCardImage() {
+            var classNameAll = "CrdNmbr maestro visa mastercard diners discover rupay amex trms and" ;
+            var className = "CrdNmbr" ;
+            if($('.cardNumber').val().length >= 1) {
+                className = detectCardType($('.cardNumber').val(), true) ;
+            }
+            if(className!='unknown') {
+                $('.cardNumber').removeClass(classNameAll) ;
+                $('.cardNumber').addClass(className) ;
+            }
+            if(className=='amex'){
+                document.getElementById('cvvimageid').src='images/cvv02.png';
+            }else{
+                document.getElementById('cvvimageid').src='images/cvv-bg.png';
+            }
+
+        }
+
+        function detectEMICardImage()
+        {
+            var classNameAll = "CrdNmbr maestro visa mastercard diners discover rupay amex trms and" ;
+            var className = "CrdNmbr" ;
+            if($('.EmicardNumber').val().length >= 1) {
+                className = detectCardType($('.EmicardNumber').val(), true) ;
+            }
+            if(className!='unknown') {
+                $('.EmicardNumber').removeClass(classNameAll) ;
+                $('.EmicardNumber').addClass(className) ;
+            }
+
+
+        }
+
+        function surchargeDebitcardDisplayForSurcharge(){
+            $(this).parent('li').siblings().removeClass('selected');
+            $(this).parent('li').addClass('selected');
+            var id= $(this).attr('href');
+
+
+            id="#view2";
+
+            $('.tabcontents .tab').hide();
+            $(id).show();
+        }
+
+        function detectAtmPinCardImage() {
+            var classNameAll = "CrdNmbr maestro visa mastercard diners discover rupay amex trms and" ;
+            var className = "CrdNmbr" ;
+            if($('.atmPinCardNumber').val().length >= 1) {
+                className = detectCardType($('.atmPinCardNumber').val(), false) ;
+            }
+            if(className!='unknown') {
+                $('.atmPinCardNumber').removeClass(classNameAll) ;
+                $('.atmPinCardNumber').addClass(className) ;
+            }
+
+        }
+        var counterforsurcharge=0;
+        function selectFirstTab() {
+            getSelectedOption();
+            if(true){
+                if(selectFirstTabFlag==1) {
+                    $('.paymntWrapr .tabs a:first ').click();
+                    /* document.getElementsByClassName("paymentOptionTab")[0].click();  */
+                    document.getElementById("savedcard_2").click();
+                }
+            }
+            if($('#isSurcharge')){
+                surchargeDebitcardDisplayForSurcharge();
+            }
+            updateMerchantPaymentColor();
+
+        }
+
+        var selectFirstTabFlag=1;
+        var selectedTab = "";
+        $(document).ready(function(){
+            walletoption = $("#mwalletForm [name='bankRadio']")[0];
+            if(!(typeof walletoption === "undefined")){
+                setWalletId(walletoption)
+                walletoption.checked=true
+            }
+            $("body").click(function(e){
+                if($("#layer_login").hasClass("dsplN")) {
+                } else {
+                    $("#layer_login")[0].style.display = "none" ;
+                    $("#layer_login").addClass("dsplN") ;
+                }
+            });
+            $('.cardNumber').keyup(detectCardImage) ;
+            $('.atmPinCardNumber').keyup(detectAtmPinCardImage) ;
+
+            $('.paymntWrapr .tabs .paymentOptionTab').on('click',function(e){
+                e.preventDefault();
+                $(this).parent('li').siblings().removeClass('selected');
+                $(this).parent('li').addClass('selected');
+                var id= $(this).attr('href');
+                $('.tabcontents .tab').hide();
+                $(id).show();
+                var debitorcredit = $(id+" form input[name='debitorcredit']").val();
+                var bankid = $(id+" form input[name='bankid']").val();
+                updateConvenienceAmount(debitorcredit, bankid,false);
+                getSurchargeForMerchant();
+
+
+            });
+
+            IsOffersAvailable(true);
+
+
+            updateMerchantPaymentColor();
+        });
+
+        function getSelectedOption()
+        {
+            if($("#dc"))
+            {
+                selectedTab= "dc";
+            }
+            else if($("#cc"))
+            {
+                selectedTab= "cc";
+            }
+            else if($("#nb"))
+            {
+                selectedTab ="nb";
+            }
+            else if($("#wa"))
+            {
+                selectedTab= "wa";
+            }
+        }
+        var selectedForm;
+        function changeSelected(source)
+        {
+            selectedTab = source;
+            getSelectedForm(selectedTab);
+        }
+
+        var vpaMap;
+        function setVpaSupportedMap() {
+            vpaMap={"@upi":true,"@okicici":true,"@okhdfcbank":true,"@okaxis":true,"@ikwik":true,"@icici":true,"@oksbi":true,"@ybl":true,"@paytm":true};
+        }
+        function  checkIfVPASupported(bankName) {
+
+            if(vpaMap[bankName]===true){
+                return true ;
+            }
+            return false;
+        }
+        function getSelectedForm(selectedTab){
+            $("#conv-amt-div").show();
+            $("#pay").show();
+            if(selectedTab=="sc"){
+                selectedForm=document.forms['saveCardForm'];
+            }
+            if(selectedTab=="dc"){
+                selectedForm=document.forms['debitForm'];
+            }
+            if(selectedTab=="cc"){
+                selectedForm=document.forms['debitForm'];
+            }
+            if(selectedTab=="nb"){
+                selectedForm=document.forms['netBankingForm'];
+            }
+            if(selectedTab=="emi"){
+                selectedForm=document.forms['EmiForm'];
+            }
+            if(selectedTab=="wa"){
+                selectedForm=document.forms['mwalletForm'];
+            }
+            if(selectedTab=="upi"){
+                selectedForm=document.forms['UPIForm'];
+            }
+            if(selectedTab == "paylater"){
+                selectedForm=document.forms['PayLaterForm'];
+            }
+            if(selectedTab == "mandate"){
+                selectedForm=document.forms['mandateForm'];
+                $("#conv-amt-div").hide();
+                $("#pay").hide();
+            }
+            if(selectedTab == "upiQr"){
+                selectedForm=document.forms['upiQrForm'];
+                selectedForm.action = '/api/v1/transactNew';
+                selectedForm.submit();
+            }
+        }
+
+        function showLayer(id){
+            $("#"+id).fadeIn("fast", function(){
+                $(this).removeClass("dsplN");
+            });
+
+        }
+
+        function hideLayer(id){
+            $("#"+id).fadeOut("fast", function(){
+                $(this).addClass("dsplN");
+            });
+        }
+
+	</script>
+
+
+
+</head>
+
+<body onload="javascript:selectFirstTab();">
+
+
+
+
+<div class="main">
+
+
+    <!-- Header Starts Here -->
+    <div class="hdr">
+        <a href="#"><img src="https://static.zaakpay.com/merchantlogo/merchant-logo-9de99b29d3cd4db7a81d2900448380cf.png" alt="Zaakpay Test Account" /></a>
+
+
+        <span><strong><i>Order Id: </i><em>ZP202202091140Deep </em></strong><font id = "pay" class="conv-pay">Pay<b id="displayAmt"> Rs. 10.00</b></font><font class="conv-pay"><b id="discountedAmount"></b></font></span>
+
+
+        <span style="color:RED" class="space-bnr"><strong></strong>&nbsp;</span>
+        <div class="clear"></div>
+    </div>
+    <!-- Header Ends Here -->
+
+
+
+
+    <!-- Retry Error box -->
+
+
+
+
+    <!-- Retry Error box -->
+    <!-- Banks Status Unit -->
+
+    <div id="bnkname">
+    </div>
+
+    <!-- Banks Status Unit -->
+    <!-- Payment Container Starts -->
+    <div class="pymntBx">
+        <div class="pyHeader">
+            <h2>Payment Options</h2>
+
+            <a style="cursor: pointer" onclick="showMagic();" title="" id="view-offers">View
+                Offers(<span id="couponCount" value=7>7</span>) &#62</a>
+
+        </div>
+
+        <div class="paymntWrapr">
+            <ul class="tabs nav" data-persist="true">
+
+
+
+
+                <li><a class='paymentOptionTab' href='#view2'
+                       onclick="displayDebitAmount();changeSelected('dc');removeOffer(7);handleTabsClicks('Debit Card');">
+                    <font class="dc-offer-opt">Debit Card</font><i></i>
+                </a></li>
+                <a style="display: none;" id="dc"></a>
+
+
+
+                <li><a class='paymentOptionTab' href='#view2'
+                       onclick="    displayDebitAmount();changeSelected('cc');removeOffer(7);handleTabsClicks('Credit Card');">
+                    <font class="cc-offer-opt">Credit Card</font><i></i>
+                </a></li>
+                <a style="display: none;" id="cc"></a>
+
+
+
+                <li><a class='paymentOptionTab' href='#view4'
+                       onclick="displayActualAmt();changeSelected('nb');removeOffer(7);handleTabsClicks('Net Banking');">
+                    <font class="nb-offer-opt">Net Banking</font><i></i>
+                </a></li>
+                <a style="display: none;" id="nb"></a>
+
+
+
+                <li class='mobikwik'><a class='paymentOptionTab' href='#view5'
+                                        onclick="displayActualAmt();changeSelected('wa');removeOffer(7);handleTabsClicks('Wallet');">
+                    <font class="wlt-pay-opt">Wallet</font><i></i>
+                </a></li>
+                <a style="display: none;" id="wa"></a>
+
+
+
+
+
+
+
+                <li><a class='paymentOptionTab' href='#view9'
+                       onclick="displayActualAmt();changeSelected('upi');removeOffer(7);handleTabsClicks('UPI');setVpaSupportedMap();">
+                    <font class="upi-offer-opt"><span>UPI</span></font><i></i>
+                </a></li>
+                <a style="display: none;" id="upi"></a>
+
+
+                <li><a class='paymentOptionTab' href='#view14'
+                       onclick="displayActualAmt();changeSelected('upiQr');removeOffer(7);handleTabsClicks('UPI QR');setVpaSupportedMap();">
+                    <font class="upi-offer-opt"><span>UPI QR</span></font><i></i>
+                </a></li>
+                <a style="display: none;" id="upiqr"></a>
+
+
+                <li><a class='paymentOptionTab' href='#view10'
+                       onclick="displayActualAmt();changeSelected('emi');removeOffer(7);handleTabsClicks('EMI');">
+                    <font class="emicc-offer-opt"><span>EMI</span></font><i></i>
+                </a></li>
+                <a style="display: none;" id="emi"></a>
+
+
+
+                <li><a class='paymentOptionTab' href="#view12"
+                       onclick="displayActualAmt();changeSelected('paylater');removeOffer(7);handleTabsClicks('PayLater');">
+                    <font class="upi-offer-opt"><span>PayLater</span></font><i></i>
+                </a> </li>
+                <a style="display: none;" id="upi"></a>
+
+
+                <li><a class='paymentOptionTab' href="#view13"
+                       onclick="displayActualAmt();changeSelected('mandate');removeOffer(7);handleTabsClicks('Mandate');">
+                    <font class="upi-offer-opt"><span>Mandate</span></font><i></i>
+                </a> </li>
+                <a style="display: none;" id="mandate"></a>
+
+
+
+            </ul>
+            <input  type ="hidden" name="isConvenienceMerchant" id ="isConvenienceMerchant" value="false"/>
+            <input  type ="hidden" name="isResellerMerchant" id ="isResellerMerchant" value="false"/>
+            <input  type ="hidden" name="currency" id="currency" value="Rs."/>
+            <input  type ="hidden" name="isSurcharge" id ="isSurcharge" value="false"/>
+            <input  type ="hidden" name="isSurchargeForConvienentPage" id ="isSurchargeForConvienentPage" value="false"/>
+
+            <div class="tabcontents tbCntnt">
+
+
+
+                <!-- Credit/Debit Card -->
+                <div id="view2" class="tab">
+                    <form id="debitForm" autocomplete="off" method="post" action="">
+                        <!-- <input type="hidden" name="debitorcredit"  value="debit"/> -->
+                        <input type="hidden" name="debitorcredit"  value="card"/>
+                        <input type="hidden" name="couponName" value="" />
+                        <input type="hidden" name="discountAmount" id="discountAmount" value="" />
+                        <input type="hidden" name="checkout" id="checkout" value="true" />
+                        <input type="hidden" name="encrypted_expiry_month" id="encrypted_expiry_month" />
+                        <input type="hidden" name="encrypted_expiry_year" id="encrypted_expiry_year"  />
+                        <input type="hidden" name="encrypted_pan" id="encrypted_pan" />
+                        <input type="hidden" name="encryptedcvv" id="encryptedcvv" />
+                        <input type="hidden" name="sessionid" id="sessionid" value="69A1DCFE57527A3BDEA195108F292BAA.11.57"  />
+                        <input type="hidden" name="txnid" id="txnid" value="ZP958eb43d8661" />
+                        <input type="hidden" name="lastBin" id ="lastBin" value=""/>
+                        <input type="hidden" name="lastBinOffer" id ="lastBinOffer" value=""/>
+
+                        <input  type ="hidden" name="notCreditCardMerch" id="notCreditCardMerchant" value="false"/>
+                        <input  type ="hidden" name="amountToDisplay" id="amountToDisplay" value="10.00"/>
+                        <input  type ="hidden" name="showDCOnly" id ="isSurcharge" value="false"/>
+                        <input  type ="hidden" name="showCCOnly" id ="isSurcharge" value="false"/>
+                        <input  type ="hidden" name="mid" id ="mid" value="2"/>
+                        <input  type ="hidden" name="isInternationalDisabled" id ="isInternationalDisabled" value="false"/>
+
+
+
+
+                        <div class="frm">
+
+                            <!-- <p><label>Name on Card</label><span><input type="text" name="nameoncard" id="nameoncard"  placeholder="Enter Here" maxlength="50" /></span></p>
+                                        <p class="error"><label></label><span id="err_nameCard"></span></p> -->
+
+                            <p><label>Card Number</label><span><input type="text" placeholder="Enter Here" id = "panId" name="pan" class="CrdNmbr cardNumber" maxlength="20" onkeyup="javascript:checkOffers(this.form,2,'abc.txt@gmail.com','');"/></span>
+                            </p>
+                            <p class="error"><label></label><span id="err_card"></span></p>
+                            <p><label>Valid Till
+
+                                <i>(Optional for Maestro)</i>
+
+
+                            </label><span><select class="wSplt w145" name="expiry_month">
+                      <option value="mm">Month</option>
+                            <option value="1">01 </option>
+                            <option value="2">02 </option>
+                            <option value="3">03 </option>
+                            <option value="4">04 </option>
+                            <option value="5">05 </option>
+                            <option value="6">06 </option>
+                            <option value="7">07 </option>
+                            <option value="8">08 </option>
+                            <option value="9">09 </option>
+                            <option value="10">10 </option>
+                            <option value="11">11 </option>
+                            <option value="12">12 </option>
+										</select> <select class="wSplt marL20 w145" name="expiry_year">
+                   			<option value="yy">Year</option>
+												<option value="2022">2022</option>
+												<option value="2023">2023</option>
+												<option value="2024">2024</option>
+												<option value="2025">2025</option>
+												<option value="2026">2026</option>
+												<option value="2027">2027</option>
+												<option value="2028">2028</option>
+												<option value="2029">2029</option>
+												<option value="2030">2030</option>
+												<option value="2031">2031</option>
+												<option value="2032">2032</option>
+												<option value="2033">2033</option>
+												<option value="2034">2034</option>
+												<option value="2035">2035</option>
+												<option value="2036">2036</option>
+												<option value="2037">2037</option>
+												<option value="2038">2038</option>
+												<option value="2039">2039</option>
+												<option value="2040">2040</option>
+												<option value="2041">2041</option>
+												<option value="2042">2042</option>
+												<option value="2043">2043</option>
+												<option value="2044">2044</option>
+												<option value="2045">2045</option>
+												<option value="2046">2046</option>
+												javascript:showDefaultOption
+										</select></span>
+                            </p>
+                            <p class="error">
+                                <label></label><span id="err_expDate"></span>
+                            </p>
+                            <p>
+                                <label>CVV Number
+                                    <i>(Optional for Maestro)</i>
+
+                                </label><span><input id="cvvnum" type="password" class="wSplt" placeholder="Enter Here" name="cvv" maxlength="3" onkeypress="return onEnterCVVNum(event);"/><a href="#" class="cvv poptrig">What's This? <span class="popblock"> <img id="cvvimageid" src="images/cvv-bg.png" /><span class="arrow"></span></span>
+									</a></span></p>
+                            <p class="error"><label></label><span id="err_cvv"></span></p>
+
+
+                            <p><label></label><span><input type="checkbox" value="true" name="saveCard" /><font>Save this Card</font></span>
+                            </p>
+                            <p class="marT5">
+                                <label></label><span><i>Save your card information with us to make your next purchase easy. We do not store CVV.</i></span>
+                            </p>
+
+                            <p><label></label><span><input type="button" value="Make Payment" class="mk_payment_btn" onclick="javascript:submitPaymentForm(this);handleOutboundLinkClicks('Pay');" /></span>
+                            </p>
+                            <p><label></label><span><a href="/api/v1/cancelTxn?txnid=ZP958eb43d8661" id="debitForm_Cancel" onclick="handleOutboundLinkClicks('go_back_to_merchant');">Go back to Zaakpay Test Account</a></span>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+                <!-- Credit/Debit Card -->
+
+
+
+
+                <!-- Net Banking -->
+                <div id="view4" class="tab">
+                    <form id="netBankingForm" autocomplete="off" method="post" action="">
+                        <input type="hidden" name="couponName" value="" />
+                        <input type="hidden" name="discountAmount" id="discountAmount" value="" />
+                        <input type="hidden" name="debitorcredit" value="netbanking" />
+                        <input type="hidden" name="bankid" id="bankid" />
+                        <input type="hidden" name="checkout" id="checkout" value="true" />
+                        <input type="hidden" name="txnid" id="txnid" value="ZP958eb43d8661" />
+                        <input  type ="hidden" name="amountToDisplay" id="amountToDisplay" value="10.00"/>
+
+                        <div class="frm">
+                            <p>
+                                <label>Popular Banks</label>
+                                <span class="rdBtn">
+
+                              <label for="axis" class="axis"><input id="axis" name="bankRadio" type="radio" value="AXIS"  onclick="setBankId(this);removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('netbanking',null,false);" /></label>
+
+                              <label for="hdfc" class="hdfc"><input id="hdfc" name="bankRadio" type="radio" value="HDF"  onclick="setBankId(this);removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('netbanking',null,false);" /></label>
+
+                              <label for="icici" class="icici"><input id="icici" name="bankRadio" type="radio" value="ICICI"  onclick="setBankId(this);removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('netbanking',null,false);" /></label>
+
+                              <label for="ktk" class="ktk"><input id="ktk" name="bankRadio" type="radio" value="162"  onclick="setBankId(this);removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('netbanking',null,false);" /></label>
+
+                              <label for="sbi" class="sbi"><input id="sbi" name="bankRadio" type="radio" value="SBI"  onclick="setBankId(this);removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('netbanking',null,false);" /></label>
+
+                      </span>
+                            </p>
+                            <p class="iE"><label>Other Banks</label><span>
+
+                  <select  name="banksList" id="banksList" onchange="setBankId(this);removeOffer(7);checkOffers(this.form,2,3,'abc.txt@gmail.com',''),updateConvenienceAmount('netbanking',null,false)">                <option value="NULL">Choose your Bank</option>
+
+                      <option disabled="disabled" value="NULL">__________________</option>
+
+
+                          <option value="APB">Airtel Payments Bank</option >
+
+                          <option value="ADB">Andhra Bank</option >
+
+                          <option value="AXIS">Axis Bank</option >
+
+                          <option value="BDB">Bandhan Bank</option >
+
+                          <option value="BBK">Bank of Bahrain and Kuwait</option >
+
+                          <option value="BBC">Bank of Baroda - Corporate Banking</option >
+
+                          <option value="BBR">Bank of Baroda - Retail Banking</option >
+
+                          <option value="BOI">Bank of India</option >
+
+                          <option value="BOM">Bank of Maharashtra</option >
+
+                          <option value="CNB">Canara Bank</option >
+
+                          <option value="CSB">Catholic Syrian Bank</option >
+
+                          <option value="CBI">Central Bank of India</option >
+
+                          <option value="CTB">Citibank</option >
+
+                          <option value="CUB">City Union Bank</option >
+
+                          <option value="CRP">Corporation Bank</option >
+
+                          <option value="CMB">Cosmos Bank</option >
+
+                          <option value="DBS">DBS Bank Ltd</option >
+
+                          <option value="DEN">Dena Bank</option >
+
+                          <option value="DBK">Deutsche Bank</option >
+
+                          <option value="DCB">Development Credit Bank</option >
+
+                          <option value="DLB">Dhanlakshmi Bank</option >
+
+                          <option value="FBK">Federal Bank</option >
+
+                          <option value="HDF">HDFC Bank</option >
+
+                          <option value="HSBC">HSBC BANK</option >
+
+                          <option value="ICICI">ICICI Bank</option >
+
+                          <option value="IDB">IDBI Bank</option >
+
+                          <option value="IDN">IDFC Bank</option >
+
+                          <option value="ING">ING Vysya Bank</option >
+
+                          <option value="INB">Indian Bank</option >
+
+                          <option value="IOB">Indian Overseas Bank</option >
+
+                          <option value="IDS">IndusInd Bank</option >
+
+                          <option value="JSB">JANATA SAHAKARI BANK LTD. PUNE</option >
+
+                          <option value="JKB">Jammu and Kashmir Bank</option >
+
+                          <option value="KBL">Karnataka Bank Ltd</option >
+
+                          <option value="KVB">Karur Vysya Bank</option >
+
+                          <option value="162">Kotak Bank</option >
+
+                          <option value="LVC">Laxmi Vilas Bank - Corporate Net Banking</option >
+
+                          <option value="OBC">PNB (Erstwhile-Oriental Bank of Commerce)</option >
+
+                          <option value="UNI">PNB (Erstwhile-United Bank of India)</option >
+
+                          <option value="CPN">Punjab National Bank - Corporate Banking</option >
+
+                          <option value="PNB">Punjab National Bank - Retail Banking</option >
+
+                          <option value="PSB">Punjab and Sind Bank</option >
+
+                          <option value="RBL">RBL Bank</option >
+
+                          <option value="SWT">Saraswat Bank</option >
+
+                          <option value="SVC">Shamrao Vitthal Co-operative Bank</option >
+
+                          <option value="SIB">South Indian Bank</option >
+
+                          <option value="SCB">Standard Chartered Bank</option >
+
+                          <option value="SBI">State Bank of India</option >
+
+                          <option value="SBM">State Bank of Mysore</option >
+
+                          <option value="SSF">Suryoday Small Finance Bank Ltd</option >
+
+                          <option value="SYD">Syndicate Bank</option >
+
+                          <option value="TMB">Tamilnad Mercantile Bank Ltd.</option >
+
+                          <option value="UCO">UCO Bank</option >
+
+                          <option value="UBI">Union Bank of India</option >
+
+                          <option value="UNIZP">United Bank of India</option >
+
+                          <option value="VJB">Vijaya Bank</option >
+
+                          <option value="YBK">Yes Bank Ltd</option >
+
+
+
+
+                  </select></span></p>
+                            <p class="error"><label></label><span id="err_bank"></span></p>
+                            <p><label></label><span><input type="button" value="Make Payment" class="mk_payment_btn" onclick="javascript:submitPaymentForm(this);handleOutboundLinkClicks('Pay');" /></span>
+                            </p>
+                            <p><label></label><span><a href="/api/v1/cancelTxn?txnid=ZP958eb43d8661" id="netBankingForm_Cancel" onclick="handleOutboundLinkClicks('go_back_to_merchant');">Go back to Zaakpay Test Account</a></span>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+                <!-- Net Banking -->
+
+
+
+                <!-- MobiKwik -->
+
+                <div id="view5" class="tab">
+                    <form id="mwalletForm" autocomplete="off" method="post" action="">
+                        <input type="hidden" name="couponName" value="" />
+                        <input type="hidden" name="discountAmount" id="discountAmount" value="" />
+                        <input type="hidden" name="debitorcredit" value="wallet"  />
+                        <input type="hidden" name="bankid" id="walletid" value="" />
+                        <input type="hidden" name="checkout" id="checkout" value="true" />
+                        <input type="hidden" name="txnid" id="txnid" value="ZP958eb43d8661" />
+                        <input  type ="hidden" name="amountToDisplay" id="amountToDisplay" value="10.00"/>
+
+                        <div class="mbkwik frm" style='text-align:center'>
+                            <p>
+									<span class="rdBtn wlt-pay-opt-box">
+
+                          <label for="mbk" class="mbkw"><input id="mbk" name="bankRadio" type="radio" value="" onclick="setWalletId(this);removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('MBK',null,false)" checked="checked" /></label>
+
+
+
+
+
+
+                          <label for="oxigen" class="oxiw"><input id="oxigen" name="bankRadio" type="radio" value="OXYW" onclick="setWalletId(this);removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('OXYW',null,false)" /></label>
+
+
+
+                          <label for="payzapp" class="pzappw"><input id="payzapp" name="bankRadio" type="radio" value="payzpw" onclick="setWalletId(this);removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('payzpw',null,false)" /></label>
+
+
+
+
+
+                  </span>
+                            </p>
+
+                            <!-- <div class="mbkwik frm"  style='text-align:center' >
+                                              <img src="images/icash.png" width="200" height="40" /> -->
+                            <!-- <span>Cashback Offer! Get <strong>Rs 50</strong></span>-->
+                            <!-- <font>Pay Kwik using your MobiKwik wallet</font> -->
+                            <p><span><input type="button"   value="Make Payment" class="mk_payment_btn" onclick="javascript:submitPaymentForm(this);handleOutboundLinkClicks('Pay');" /></span>
+                            </p>
+                            <p><span><a href="/api/v1/cancelTxn?txnid=ZP958eb43d8661" id="mwalletForm_Cancel" onclick="handleOutboundLinkClicks('go_back_to_merchant');">Go back to Zaakpay Test Account</a></span>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+                <!-- MobiKwik -->
+
+
+
+
+                <div id="view12" class="tab upi-ctnr">
+                    <form id="PayLaterForm" autocomplete="off" method="post" action="">
+                        <input type="hidden" name="couponName" value="" />
+                        <input type="hidden" name="debitorcredit" value="paylater"  />
+                        <input type="hidden" name="checkout" id="checkout" value="true" />
+                        <input type="hidden" name="txnid" id="txnid" value="ZP958eb43d8661" />
+                        <input type="hidden" name="firstname" id="firstname" value="" />
+                        <div class="top-info">
+								<span class="rdBtn wlt-pay-opt-box" style="width:240px;" >
+
+                                                <label for="epaylater" class="paylater" style="width: 240px;padding: 20px 10px !important;display: block !important;">
+                                                    <input id="epaylater" name="bankRadio" type="radio" value="ePayLater" onclick="removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('epaylater',null,false)" checked="checked"/></label>
+
+
+                                           </span>
+                        </div>
+                        <div class="top-info">
+								<span class="rdBtn wlt-pay-opt-box" style="width:240px;" >
+
+                                                <label for="olapaylater" class="olapostpaid" style="width: 240px;padding: 20px 10px !important;display: block !important;">
+                                                    <input id="olapaylater" name="bankRadio" type="radio" value="olaPayLater" onclick="removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('olapaylater',null,false)" /></label>
+
+                                           </span>
+                        </div>
+                        <div class="top-info">
+								<span class="rdBtn wlt-pay-opt-box" style="width:240px;" >
+
+                                                <label for="icicipaylater" class="icicipaylater" style="width: 240px;padding: 20px 10px !important;display: block !important;">
+                                                    <input id="icicipaylater" name="bankRadio" type="radio" value="icicipaylater" onclick="removeOffer(7);checkOffers(this.form,2,'abc.txt@gmail.com','');updateConvenienceAmount('icicipaylater',null,false)" /></label>
+
+                                           </span>
+                        </div>
+
+                        <p>Please Enter Your Mobile Number</p>
+                        <div class="frm btm-info">
+
+                            <label class="form-label">Registered Phone Number</label>
+                            <div class="frm-inpts">
+                                <p>
+                                    <input class="upi-ctnr" id ="epaylaternumber" type="text" placeholder="Enter Here" name="epaylater_number" value=""  maxlength="10"/>
+                                    <span class="error"><span id="err_paylater"></span></span>
+                                </p>
+                                <p>
+                                    <input type="button"   value="Make Payment" class="mk_payment_btn btn" onclick="javascript:submitPaymentForm(this);handleOutboundLinkClicks('Pay');" />
+                                </p>
+                            </div>
+                            <p><span><a href="/api/v1/cancelTxn?txnid=ZP958eb43d8661" id="PayLaterForm_Cancel" onclick="handleOutboundLinkClicks('go_back_to_merchant');">Go back to Zaakpay Test Account</a></span>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+
+
+
+                <div id="view14" class="tab upi-ctnr">
+                    <form id="upiQrForm" autocomplete="off" method="post" action="/api/v1/transactNew">
+                        <input type="hidden" name="couponName" value="" />
+                        <input type="hidden" name="debitorcredit" value="upiqr"  />
+                        <input type="hidden" name="checkout" id="checkout" value="true" />
+                        <input type="hidden" name="txnid" id="txnid" value="ZP958eb43d8661" />
+                        <input  type ="hidden" name="amountToDisplay" id="amountToDisplay" value="10.00"/>
+                    </form>
+
+                </div>
+
+
+
+
+
+
+
+
+
+                <div id="view9" class="tab upi-ctnr">
+                    <form id="UPIForm" autocomplete="off" method="post" action="">
+                        <input type="hidden" name="couponName" value="" />
+                        <input type="hidden" name="discountAmount" id="discountAmount" value="" />
+                        <input type="hidden" name="debitorcredit" value="upi"  />
+                        <input type="hidden" name="checkout" id="checkout" value="true" />
+                        <input type="hidden" name="txnid" id="txnid" value="ZP958eb43d8661" />
+                        <input  type ="hidden" name="amountToDisplay" id="amountToDisplay" value="10.00"/>
+                        <div class="top-info">
+                            <img src="https://static8.mobikwik.com/views/zaak/api/resources/images/UPI.jpg">
+                            <p>Enter VPA which is linked with your bank account to make payment</p>
+                            <small>for e.g. username@bankname</small>
+                        </div>
+                        <div class="frm btm-info">
+
+                            <label class="form-label">VPA Address</label>
+                            <div class="frm-inpts">
+                                <p>
+                                    <input  class="upi_offer_message" id ="err_upi" type="text" placeholder="Enter Here" name="UPIId" value="" onkeyup="javascript:checkOffers(this.form,2,'abc.txt@gmail.com','')" maxlength="255"/>
+                                    <span class="error"><span id="err_upid"></span></span>
+                                </p>
+                                <p>
+                                    <input type="submit"   value="Make Payment" class="mk_payment_btn btn" onclick="return submitPaymentForm(this);handleOutboundLinkClicks('Pay');" />
+                                </p>
+                            </div>
+                            <p class="Amount to be paid info-txt"><a href="/api/v1/cancelTxn?txnid=ZP958eb43d8661"
+                                                                     id="UPIForm_Cancel"
+                                                                     onclick="handleOutboundLinkClicks('go_back_to_merchant');">Go back to Zaakpay
+                                Test Account</a></p>
+                        </div>
+                    </form>
+                </div>
+                <!-- here-->
+                <!-- MobiKwik -->
+
+
+
+
+                <!-- Credit/Debit Card -->
+                <div id="view13" class="tab">
+                    <form id="mandateForm" autocomplete="off" method="post" action="">
+                        <!-- <input type="hidden" name="debitorcredit"  value="debit"/> -->
+                        <input type="hidden" name="debitorcredit"  value="mandate"/>
+                        <input type="hidden" name="couponName" value="" />
+                        <input type="hidden" name="discountAmount" id="discountAmount" value="" />
+                        <input type="hidden" name="checkout" id="checkout" value="true" />
+                        <input type="hidden" name="sessionid" id="sessionid" value="69A1DCFE57527A3BDEA195108F292BAA.11.57"  />
+                        <input type="hidden" name="txnid" id="txnid" value="ZP958eb43d8661" />
+                        <input  type ="hidden" name="amountToDisplay" id="amountToDisplay" value="10.00"/>
+
+
+
+
+                        <div class="frm">
+
+                            <!-- <p><label>Name on Card</label><span><input type="text" name="nameoncard" id="nameoncard"  placeholder="Enter Here" maxlength="50" /></span></p>
+                                        <p class="error"><label></label><span id="err_nameCard"></span></p> -->
+
+                            <p><label>Account Number</label><span><input type="text" placeholder="Enter Account Number"
+                                                                         name="account_number"  maxlength="30"/></span>
+                            </p>
+                            <p class="error"><label></label><span id="err_account_number"></span></p>
+
+                            <p><label>Account Type
+
+                            </label><span><select class="wSplt w145" name="account_type">
+                      <option value="1">Account Type</option>
+                            <option value="current">CURRENT </option>
+                            <option value="savings">SAVINGS </option>
+										</select> </span>
+
+                            </p>
+
+                            <p class="error">
+                                <label></label><span id="err_account_type"></span>
+                            </p>
+                            <p><label>IFSC Code</label><span><input type="text" placeholder="Enter IFSC "
+                                                                    name="ifsc" class="wSplt" maxlength="30"/></span>
+                            </p>
+                            <p class="error"><label></label><span id="err_ifsc"></span></p>
+
+                            <p><label>Account holder name</label><span><input type="text" placeholder="Enter Name"
+                                                                              name="account_holder_name" class="wSplt" maxlength="30"/></span>
+                            </p>
+                            <p class="error"><label></label><span id="err_account_holder_name"></span></p>
+
+
+                            <p><label></label><span><input type="button" value="Create Mandate" class="mk_payment_btn" onclick="javascript:submitPaymentForm(this);handleOutboundLinkClicks('Pay');" /></span>
+                            </p>
+                            <p><label></label><span><a href="/api/v1/cancelTxn?txnid=ZP958eb43d8661" id="mandateForm_Cancel" onclick="handleOutboundLinkClicks('go_back_to_merchant');">Go back to Zaakpay Test Account</a></span>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+                <!-- Credit/Debit Card -->
+
+
+
+
+
+                <!-- EMI -->
+                <div id="view10" class="tab">
+                    <form id="EmiForm" autocomplete="off" method="post" action="">
+
+                        <div class="frm" style='text-align: center'>
+                            <input type="hidden" name="couponName" value="" />
+                            <input type="hidden" name="checkout" id="checkout" value="true" />
+                            <input type="hidden" name="discountAmount" id="discountAmount" value="" />
+                            <input type="hidden" name="tenure" id="tenure" value="" />
+                            <input type="hidden" name="txnid" id="txnid" value="ZP958eb43d8661" />
+                            <input type="hidden" name="debitorcredit" value="EMI" />
+                            <input type="hidden" name="encrypted_expiry_month" id="encrypted_expiry_month" />
+                            <input type="hidden" name="encrypted_expiry_year" id="encrypted_expiry_year"  />
+                            <input type="hidden" name="encrypted_pan" id="encrypted_pan" />
+                            <input type="hidden" name="encryptedcvv" id="encryptedcvv" />
+                            <input type="hidden" name="sessionid" id="sessionid" value="69A1DCFE57527A3BDEA195108F292BAA.11.57"  />
+                            <input  type ="hidden" name="amountToDisplay" id="amountToDisplay" value="10.00"/>
+                            <input  type ="hidden" name="isInternationalDisabled" id ="isInternationalDisabled" value="false"/>
+                            <p>
+                                <label>Choose Bank</label>
+                                <span>
+									<select class="iE1"
+                                            name="bank" id="bank" onchange="javascript:checkOffers(this.form,2,'abc.txt@gmail.com','');" >                 <option value="NULL">Choose your Bank</option>
+
+                    <option value="HDF">HDFC Bank</option>
+
+
+            	</select>
+
+                            <p class="error">
+                                <label></label><span id="err_EMIbank"></span>
+                            </p>
+                            <p>
+                                <label>Card Number</label><span><input type="text"
+                                                                       placeholder="Enter Here" name="pan"  id = "panNo"
+                                                                       class="CrdNmbr cardNumber" maxlength="20" onkeyup="javascript:checkOffers(this.form,2,'abc.txt@gmail.com','');" /></span>
+                            </p>
+                            <p class="error">
+                                <label></label><span id="err_emi_card"></span>
+                            </p>
+                            <p>
+                                <label>Choose Plan</label>
+                                <span> <script>
+									var emi;
+                                    function selectRate() {
+                                        var months = [];
+                                        var rates = [];
+                                        var timeperiodlist=document.getElementById("timePeriod");
+                                        var i;
+                                        for(i = timeperiodlist.options.length - 1 ; i >= 0 ; i--)
+                                        {
+                                            timeperiodlist.remove(i);
+                                        }
+                                        var x = document.getElementById("bank").value;
+
+                                            var sel = document.getElementById('timePeriod');
+
+
+                                        if(x=="HDF")
+                                        {
+
+
+
+                                            months.push(3);
+                                            rates.push(15);
+
+                                            months.push(6);
+                                            rates.push(15);
+
+                                            months.push(9);
+                                            rates.push(15);
+
+                                            months.push(12);
+                                            rates.push(15);
+
+                                            months.push(18);
+                                            rates.push(15);
+
+                                            months.push(24);
+                                            rates.push(15);
+                                            }
+                                        var temp;
+                                        months.sort(function(a, b){return a-b});
+                                        rates.sort(function(a, b){return a-b});
+                                        for(temp=0;temp<months.length;temp++)
+                                        {
+                                            var opt = document.createElement('option');
+                                            var tenure=document.getElementById('tenure').value;
+                                            var discountAmount=0.0;
+                                            if(!tenure || tenure == undefined) {
+                                                 discountAmount=document.getElementById('discountAmount').value;
+                                            }else {
+                                                if(tenure.includes(months[temp]))
+                                                    discountAmount=document.getElementById('discountAmount').value;
+
+                                            }
+                                            var loanAmount = 10.00-parseFloat(discountAmount/100).toFixed(2);
+                                            var numberOfMonths = months[temp];
+                                            var rateOfInterest = rates[temp];
+                                            var monthlyInterestRatio = (rateOfInterest/100) /12;
+                                            var top = Math.pow((1+monthlyInterestRatio),numberOfMonths);
+                                            var bottom = top -1;
+                                            var sp = top / bottom;
+                                            //change amount to be displayed
+                                            emi = ((loanAmount * monthlyInterestRatio) * sp);
+                                            opt.text="EMI Rs. "+emi.toFixed(2)+" for "+months[temp] +" months ("+rates[temp]+"% interest included) ";
+                                            opt.value=months[temp];
+                                            sel.appendChild(opt);
+                                        }
+                                        selectRate1();
+
+
+
+                                    }
+</script> <select class="iE1" name="timePeriod" id="timePeriod"
+                  onchange="selectRate1()">
+
+											<option value="0">Choose your EMI Period (Months)</option>
+
+
+
+
+									</select> <script>
+function selectRate1() {
+    var bn = document.getElementById("bank").value;
+    var tp = document.getElementById("timePeriod").value;
+    var tenure=document.getElementById('tenure').value;
+    var discountAmount=0.0;
+    if(!tenure || tenure == undefined) {
+        discountAmount=document.getElementById('discountAmount').value;
+    }else {
+        if(tenure.includes(tp))
+            discountAmount=document.getElementById('discountAmount').value;
+
+    }
+    changeEmiDiscountAmount(discountAmount);
+}
+
+
+</script>
+
+
+
+
+            	</span>
+                            <div class="wAcpt" id="debitLogos" style="display: none;">
+                                <span>We Accept</span>
+                                <p>
+                                    <font></font><b></b><i></i><em></em><strong></strong>
+                                    <!-- <img src="" border="0" /> -->
+                                </p>
+                                <div class="clear"></div>
+                            </div>
+                            <div class="wAcpt" id="creditLogos" style="display: none;">
+                                <span>We Accept</span>
+                                <p>
+                                    <font></font><b></b><i></i><a href="#"></a><em></em><strong></strong>
+                                </p>
+                                <div class="clear"></div>
+                            </div>
+
+
+                            <!-- <p><label>Name on Card</label><span><input type="text" name="nameoncard" id="nameoncard"  placeholder="Enter Here" maxlength="50" /></span></p>
+                            <p class="error"><label></label><span id="err_nameCard"></span></p> -->
+
+
+
+
+                            <p>
+                                <label>Valid Till
+                                    <i>(Optional for Maestro)</i>
+
+
+                                </label> <span> <select class="wSplt w145" name="expiry_month">
+                      <option value="mm">Month</option>
+                            <option value="1">01 </option>
+                            <option value="2">02 </option>
+                            <option value="3">03 </option>
+                            <option value="4">04 </option>
+                            <option value="5">05 </option>
+                            <option value="6">06 </option>
+                            <option value="7">07 </option>
+                            <option value="8">08 </option>
+                            <option value="9">09 </option>
+                            <option value="10">10 </option>
+                            <option value="11">11 </option>
+                            <option value="12">12 </option>
+                            </select>
+
+                  <select class="wSplt marL20 w145" name="expiry_year">
+                   			<option value="yy">Year</option>
+											<option value="2022">2022</option>
+											<option value="2023">2023</option>
+											<option value="2024">2024</option>
+											<option value="2025">2025</option>
+											<option value="2026">2026</option>
+											<option value="2027">2027</option>
+											<option value="2028">2028</option>
+											<option value="2029">2029</option>
+											<option value="2030">2030</option>
+											<option value="2031">2031</option>
+											<option value="2032">2032</option>
+											<option value="2033">2033</option>
+											<option value="2034">2034</option>
+											<option value="2035">2035</option>
+											<option value="2036">2036</option>
+											<option value="2037">2037</option>
+											<option value="2038">2038</option>
+											<option value="2039">2039</option>
+											<option value="2040">2040</option>
+											<option value="2041">2041</option>
+											<option value="2042">2042</option>
+											<option value="2043">2043</option>
+											<option value="2044">2044</option>
+											<option value="2045">2045</option>
+											<option value="2046">2046</option>
+
+									</select>
+									</span>
+                            </p>
+
+
+                            <p class="emi_offer_message">
+                                <label>CVV Number
+
+                                    <i>(Optional for Maestro)</i>
+
+                                </label><span><input id="cvvnum" type="password" maxlength="3" class="wSplt" placeholder="Enter Here"
+                                                     name="cvv" onkeypress="return onEnterCVVNum(event);"/><a href="#" class="cvv poptrig">What's This? <span class="popblock"> <img id="cvvimageid" src="images/cvv-bg.png" /><span class="arrow"></span></span></a>
+									</span></p>
+                            <p class="error"><span id="emi_err_cvv" class="emi_err_cvv"></span></p>
+
+
+
+
+
+                            <p><label></label><span><input type="button" value="Make Payment" class="mk_payment_btn" onclick="javascript:submitPaymentForm(this);handleOutboundLinkClicks('Pay');" /></span>
+                            </p>
+                            <p><label></label><span><a href="/api/v1/cancelTxn?txnid=ZP958eb43d8661" id="EmiForm_Cancel" onclick="handleOutboundLinkClicks('go_back_to_merchant');">Go back to Zaakpay Test Account</a></span>
+                            </p>
+                        </div>
+                </div>
+                </form>
+                <!-- EMI -->
+
+
+
+
+
+
+
+
+
+
+                <!-- ending <div class="tabcontents tbCntnt"> -->
+            </div>
+            <div id="conv-amt-div">
+
+            </div>
+        </div>
+
+        <div class="clear"></div>
+    </div>
+
+    <script type="text/javascript">
+
+
+    </script>
+
+    <!-- Payment Container Ends -->
+
+    <!-- Footer Starts here -->
+
+    <div class="ftr">
+        <div class="trmCn">
+            <!-- 		<span></span> -->
+            <a href="#"><img src="https://www.zaakpay.com/images/zaakpay_logo4.gif" /></a>
+            <strong><a href="https://www.zaakpay.com/Terms" target="_blank" class="trms marL10">Terms & Conditions</a>
+                <a href="#" class="and">|</a>
+                <a href="https://www.zaakpay.com/privacy-policy" target="_blank" class="trms">Privacy Policy</a></a>
+            </strong>
+        </div>
+        <table width="75" class="fR_i" cellspacing="0"
+               title="Click to Verify - This site chose GeoTrust SSL for secure e-commerce and confidential communications.">
+            <tr>
+                <td width="75" valign="top">
+                    <div class="imgGeotrustWrp">
+                        <script type="text/javascript"
+                                src="https://seal.geotrust.com/getgeotrustsslseal?host_name=api.zaakpay.com&amp;size=S&amp;lang=en">
+                        </script>
+                    </div> <br />
+                    <a href="http://www.geotrust.com/ssl/" target="_blank"
+                       style="color:#000000; text-decoration:none; font:bold 7px verdana,sans-serif; letter-spacing:.5px; text-align:center; margin:0px; padding:0px;">
+                    </a>
+                </td>
+            </tr>
+        </table>
+        <p class="fR_i">
+            <font></font><strong></strong><b></b>
+            <a class="pdc"></a>
+        </p>
+        <div class="clear"></div>
+    </div>
+
+</div>
+<!-- Footer Ends here -->
+</div>
+
+
+
+<div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <!-- Main Wraper Starts -->
+        <div id="offers" class="mainWpr">
+            <div>
+                <div>
+                    <span class="ft20 tgrey">All Offers</span>
+                </div>
+                <div class="spacer10"></div>
+                <div class="contnr">
+                    <div class="top-info">
+                        <div>
+                            <a class="tag fil-cat active" data-rel="all"><span>All</span></a>
+
+                            <a class="tag fil-cat" data-rel="debitcard"><span>Debit Card</span></a>
+
+
+                            <a class="tag fil-cat" data-rel="creditcard"><span>Credit Card</span></a>
+
+
+                            <a class="tag fil-cat" data-rel="UPI"><span>UPI</span></a>
+
+
+
+                            <a class="tag fil-cat" data-rel="netbanking"><span>NetBanking</span></a>
+
+
+                            <a class="tag fil-cat" data-rel="wallet"><span>Wallet</span></a>
+
+
+                            <a class="tag fil-cat" data-rel="EMI"><span>EMI</span></a>
+
+
+                            <a class="tag fil-cat" data-rel="EMI"><span>Mandate</span></a>
+
+                        </div>
+                    </div>
+                    <div class="radioFamily offerlist">
+
+
+
+
+
+
+                        <label for="1" class="offerBlock all ALL">
+                            <input type="radio" name="offer" onchange="selectOffer(this);checkOffers(selectedForm,2,'abc.txt@gmail.com','')" id="1" value="Dev offer 01 ">
+                            <i class="dpTableCell"></i>
+                            <div class="dpTableCell">
+                                <div class="dpTable WdFull">
+                                    <img class="bnkimg dpTableCell vtop"
+                                         src="https://static.mobikwik.com/appdata/upi/banks/.png"
+                                         alt="">
+                                    <div class="dpTableCell vtop">
+                                        <p class="ft14 tgrey fw700"> ALL</p>
+                                        <p class="ft12 tlightgrey">testing</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </label>
+
+
+
+
+
+
+                        <label for="2" class="offerBlock all ALL">
+                            <input type="radio" name="offer" onchange="selectOffer(this);checkOffers(selectedForm,2,'abc.txt@gmail.com','')" id="2" value="Dev offer 02">
+                            <i class="dpTableCell"></i>
+                            <div class="dpTableCell">
+                                <div class="dpTable WdFull">
+                                    <img class="bnkimg dpTableCell vtop"
+                                         src="https://static.mobikwik.com/appdata/upi/banks/.png"
+                                         alt="">
+                                    <div class="dpTableCell vtop">
+                                        <p class="ft14 tgrey fw700"> ALL</p>
+                                        <p class="ft12 tlightgrey">testing</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </label>
+
+
+
+
+
+
+                        <label for="3" class="offerBlock all UPI">
+                            <input type="radio" name="offer" onchange="selectOffer(this);checkOffers(selectedForm,2,'abc.txt@gmail.com','')" id="3" value="Test-01">
+                            <i class="dpTableCell"></i>
+                            <div class="dpTableCell">
+                                <div class="dpTable WdFull">
+                                    <img class="bnkimg dpTableCell vtop"
+                                         src="https://static.mobikwik.com/appdata/upi/banks/Google.png"
+                                         alt="">
+                                    <div class="dpTableCell vtop">
+                                        <p class="ft14 tgrey fw700">Google UPI</p>
+                                        <p class="ft12 tlightgrey">This is a test offer.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </label>
+
+
+
+
+
+
+                        <label for="4" class="offerBlock all debitcard">
+                            <input type="radio" name="offer" onchange="selectOffer(this);checkOffers(selectedForm,2,'abc.txt@gmail.com','')" id="4" value="Test-01">
+                            <i class="dpTableCell"></i>
+                            <div class="dpTableCell">
+                                <div class="dpTable WdFull">
+                                    <img class="bnkimg dpTableCell vtop"
+                                         src="https://static.mobikwik.com/appdata/upi/banks/AXIS.png"
+                                         alt="">
+                                    <div class="dpTableCell vtop">
+                                        <p class="ft14 tgrey fw700">Axis Bank DebitCard</p>
+                                        <p class="ft12 tlightgrey">This is a test offer.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </label>
+
+
+
+
+
+
+                        <label for="5" class="offerBlock all wallet">
+                            <input type="radio" name="offer" onchange="selectOffer(this);checkOffers(selectedForm,2,'abc.txt@gmail.com','')" id="5" value="Test-01">
+                            <i class="dpTableCell"></i>
+                            <div class="dpTableCell">
+                                <div class="dpTable WdFull">
+                                    <img class="bnkimg dpTableCell vtop"
+                                         src="https://static.mobikwik.com/appdata/upi/banks/Mobikwik.png"
+                                         alt="">
+                                    <div class="dpTableCell vtop">
+                                        <p class="ft14 tgrey fw700">Mobikwik Wallet</p>
+                                        <p class="ft12 tlightgrey">This is a test offer.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </label>
+
+
+
+
+
+
+                        <label for="6" class="offerBlock all ALL">
+                            <input type="radio" name="offer" onchange="selectOffer(this);checkOffers(selectedForm,2,'abc.txt@gmail.com','')" id="6" value="test17">
+                            <i class="dpTableCell"></i>
+                            <div class="dpTableCell">
+                                <div class="dpTable WdFull">
+                                    <img class="bnkimg dpTableCell vtop"
+                                         src="https://static.mobikwik.com/appdata/upi/banks/.png"
+                                         alt="">
+                                    <div class="dpTableCell vtop">
+                                        <p class="ft14 tgrey fw700"> ALL</p>
+                                        <p class="ft12 tlightgrey">Testing 1</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </label>
+
+
+
+
+
+
+                        <label for="7" class="offerBlock all UPI">
+                            <input type="radio" name="offer" onchange="selectOffer(this);checkOffers(selectedForm,2,'abc.txt@gmail.com','')" id="7" value="Testtstst ">
+                            <i class="dpTableCell"></i>
+                            <div class="dpTableCell">
+                                <div class="dpTable WdFull">
+                                    <img class="bnkimg dpTableCell vtop"
+                                         src="https://static.mobikwik.com/appdata/upi/banks/Mobikwik.png"
+                                         alt="">
+                                    <div class="dpTableCell vtop">
+                                        <p class="ft14 tgrey fw700">Mobikwik UPI</p>
+                                        <p class="ft12 tlightgrey">Tests</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </label>
+
+
+
+                    </div>
+
+                    <div class="clearsp"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Main Wraper Ends -->
+    </div>
+
+    <!-- <p><label></label><span><input type="submit" value="Apply" class="mk_payment_btn" onclick=" return submitPaymentForm(this);"/></span></p> -->
+
+</div>
+
+
+
+
+<script type="text/javascript">
+		$(function () {
+                var selectedClass = "";
+                $(".fil-cat").click(function () {
+                    $(".fil-cat").removeClass("active")
+                    $(this).addClass("active");
+                    selectedClass = $(this).attr("data-rel");
+                    $(".offerlist").fadeTo(100, 0.1);
+                    $(".offerlist label").not("." + selectedClass).fadeOut().removeClass('scale-anm');
+                    setTimeout(function () {
+                        $("." + selectedClass).fadeIn().addClass('scale-anm');
+                        $(".offerlist").fadeTo(300, 1);
+                    }, 300);
+
+                });
+            });
+	</script>
+<script>
+		// Get the modal
+            var modal = document.getElementById('myModal');
+
+            // When the user clicks anywhere outside of the modal, close it
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+	</script>
+
+<script src="/javascripts/newcardjs.js?v=4" type="text/javascript"></script>
+<script>
+		notifyErrorStyle();
+	</script>
+<footer>
+    <style>
+			.popblock {
+				display: none !important;
+				position: absolute;
+				min-width: 150px;
+				height: auto;
+				left: 78px;
+				top: -30px;
+				padding: 5px;
+				border-radius: 4px;
+				box-shadow: 0 0 4px 0 rgba(0, 0, 0, .15);
+				background: #fff;
+			}
+
+			.poptrig:hover .popblock {
+				display: block !important;
+			}
+
+			.popblock:before {
+				content: '';
+				width: 100%;
+				width: calc(100% + 30px);
+				position: absolute;
+				left: -15px;
+				top: -15px;
+				height: 100%;
+				height: calc(100% + 30px);
+				display: block;
+				z-index: -1;
+			}
+
+			.popblock img {
+				position: relative;
+				top: initial;
+				z-index: auto;
+				left: initial;
+				visibility: visible;
+			}
+
+			.popblock .arrow {
+				position: absolute;
+				width: 10px;
+				height: 10px;
+				background-color: #fff;
+				display: block;
+				z-index: 1;
+				left: 0;
+				right: auto;
+				top: 28px;
+				bottom: auto;
+				box-sizing: border-box;
+				border: 1px solid #fff;
+				-webkit-transform-origin: 0 0;
+				transform-origin: 0 0;
+				-webkit-transform: rotate(45deg);
+				transform: rotate(45deg);
+				box-shadow: -2px 2px 2px 0 rgba(0, 0, 0, .07);
+			}
+		</style>
+</footer>
+</body>
+
+</html>
